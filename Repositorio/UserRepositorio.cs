@@ -14,9 +14,22 @@ namespace APIClientes.Repositorio
             _db = db;
         }
 
-        public Task<string> Login(string username, string password)
+        public async Task<string> Login(string username, string password)
         {
-            throw new NotImplementedException();
+            var user = await _db.Users.FirstOrDefaultAsync(x => x.UserName.ToLower().Equals(username.ToLower()));
+
+            if (user == null)
+            {
+                return "nouser";
+            }
+            else if(!VerificarPasswordHash(password, user.PassWordHash, user.PassWordSalt))
+            {
+                return "wrongpassword";
+            }
+            else
+            {
+                return "ok";
+            }
         }
 
         public async Task<int> Register(User user, string password)
@@ -62,6 +75,23 @@ namespace APIClientes.Repositorio
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
 
+            }
+        }
+        //verificar clave
+        public bool VerificarPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
+        {
+            using(var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            {
+                var computerHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                for (int i = 0; i<computerHash.Length; i++)
+                {
+                    if (computerHash[i] != passwordHash[i])
+                    {
+                        return false;
+                    }
+
+                }
+                return true;
             }
         }
     }
