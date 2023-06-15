@@ -9,11 +9,15 @@ using APIClientes.Data;
 using APIClientes.Modelos;
 using APIClientes.Repositorio;
 using APIClientes.Modelos.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 namespace APIClientes.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] //autoriza la autenticacion para acceder
+                //al colocarlo aqui todos los metodos necesitan la autenticacion y token
+                //Si lo colocamos directamente en el metodo, solo el mismo sera afectado
     public class ClientesController : ControllerBase
     {
         private readonly IClienteRepositorio _clienteRepositorio;
@@ -65,6 +69,7 @@ namespace APIClientes.Controllers
         // PUT: api/Clientes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        
         public async Task<IActionResult> PutCliente(int id, ClienteDto clienteDto)
         {
             try
@@ -87,6 +92,7 @@ namespace APIClientes.Controllers
         // POST: api/Clientes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        
         public async Task<ActionResult<Cliente>> PostCliente(ClienteDto clienteDto)
         {
             try
@@ -109,6 +115,7 @@ namespace APIClientes.Controllers
 
         // DELETE: api/Clientes/5
         [HttpDelete("{id}")]
+        
         public async Task<IActionResult> DeleteCliente(int id)
         {
             try

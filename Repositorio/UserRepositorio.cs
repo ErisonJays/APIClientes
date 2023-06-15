@@ -1,6 +1,9 @@
 ﻿using APIClientes.Data;
 using APIClientes.Modelos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 
 namespace APIClientes.Repositorio
@@ -8,10 +11,12 @@ namespace APIClientes.Repositorio
     public class UserRepositorio : IUserRepositorio
     {
         private readonly ApplicationDbContextcs _db;
+        private readonly IConfiguration _configuration;
 
-        public UserRepositorio(ApplicationDbContextcs db)
+        public UserRepositorio(ApplicationDbContextcs db, IConfiguration configuration)
         {
             _db = db;
+            _configuration = configuration;
         }
 
         public async Task<string> Login(string username, string password)
@@ -28,7 +33,7 @@ namespace APIClientes.Repositorio
             }
             else
             {
-                return "ok";
+                return CrearToken(user); //generar token
             }
         }
 
@@ -94,5 +99,31 @@ namespace APIClientes.Repositorio
                 return true;
             }
         }
+
+        //Metodo para crear los tokens
+        private string CrearToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.
+                GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = System.DateTime.Now.AddDays(1),//el token caducara en un 1 dia
+                SigningCredentials = creds
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+
     }
 }
